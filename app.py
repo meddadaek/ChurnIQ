@@ -12,6 +12,9 @@ Start:
 import os, json, re, traceback, warnings
 warnings.filterwarnings("ignore")
 
+from dotenv import load_dotenv
+load_dotenv()  # Load from .env file
+
 import numpy as np
 import pandas as pd
 import pickle
@@ -601,13 +604,13 @@ def server_error(e): return jsonify({"error": "Internal server error"}), 500
 if __name__ == "__main__":
     cv = pipeline_cfg or {}
     print("\n" + "=" * 60)
-    print("  ChurnIQ · Customer Intelligence Platform")
-    print("  Two-Stage Ridge → XGBoost · N-gram TE · SHAP")
+    print("  ChurnIQ - Customer Intelligence Platform")
+    print("  Two-Stage Ridge -> XGBoost - N-gram TE - SHAP")
     print("=" * 60)
     print(f"  Ridge CV AUC  : {cv.get('cv_ridge_auc', 'N/A')}")
     print(f"  XGB   CV AUC  : {cv.get('cv_xgb_auc',   'N/A')}")
     print(f"  Groq LLM      : {'enabled' if groq_client else 'fallback mode'}")
     print(f"  Features      : {len(NUMERIC_COLS) if NUMERIC_COLS else 'not loaded'}")
-    print(f"\n  Dashboard  →  http://localhost:5000")
+    print(f"\n  Dashboard  ->  http://localhost:5000")
     print("=" * 60 + "\n")
     app.run(debug=False, host="0.0.0.0", port=5000, use_reloader=False)
