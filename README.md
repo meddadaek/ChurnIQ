@@ -13,6 +13,9 @@ Built for telecom customer retention, but extensible to any subscription-based b
 
 ---
 
+## **https://customer-churn-predictor-with-shap-ai-production.up.railway.app/**
+
+
 ## ✨ Key Features
 
 ### 🔮 **Dual-Stage Prediction Pipeline**
@@ -150,7 +153,7 @@ Output:
 ```
 
 ### 7. Open Dashboard
-Navigate to **http://localhost:5000**
+Navigate to **https://customer-churn-predictor-with-shap-ai-production.up.railway.app/**
 
 ---
 
