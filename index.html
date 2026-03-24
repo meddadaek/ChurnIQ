@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChurnIQ · Customer Intelligence Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg:        #0b0e14;
+  --bg2:       #111520;
+  --bg3:       #161b27;
+  --bg4:       #1c2233;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+  --text:      #e8eaf0;
+  --text2:     #8b93a8;
+  --text3:     #5a6278;
+  --accent:    #4f8fff;
+  --accent2:   #7c5cfc;
+  --green:     #2dd98f;
+  --red:       #ff5c7c;
+  --amber:     #ffb347;
+  --teal:      #22d3ee;
+  --glow-blue: rgba(79,143,255,0.15);
+  --glow-red:  rgba(255,92,124,0.12);
+  --font:      'DM Sans', sans-serif;
+  --mono:      'DM Mono', monospace;
+  --serif:     'Playfair Display', serif;
+  --radius:    12px;
+  --radius-lg: 18px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+/* ── Layout ── */
+.shell { display: flex; min-height: 100vh; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .wordmark {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.3px;
+}
+.sidebar-logo .sub {
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.sidebar-nav { padding: 16px 0; flex: 1; }
+.nav-section {
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 10px 20px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  cursor: pointer;
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 400;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+  user-select: none;
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-item.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: rgba(79,143,255,0.06);
+  font-weight: 500;
+}
+.nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
+.nav-item.active .nav-icon { opacity: 1; }
+.sidebar-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text3);
+}
+.status-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  background: var(--green);
+  border-radius: 50%;
+  margin-right: 6px;
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse 2.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── Main ── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── Topbar ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar-title { font-size: 15px; font-weight: 500; color: var(--text); }
+.topbar-title span { color: var(--text3); font-weight: 300; margin-left: 6px; font-size: 13px; }
+.topbar-badges { display: flex; gap: 8px; align-items: center; }
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+.badge-medium { background: rgba(255,179,71,0.15); color: var(--amber); border: 1px solid rgba(255,179,71,0.25); }
+.badge-live   { background: rgba(45,217,143,0.12); color: var(--green); border: 1px solid rgba(45,217,143,0.2); }
+.badge-high   { background: rgba(255,92,124,0.15); color: var(--red);   border: 1px solid rgba(255,92,124,0.25); }
+.badge-low    { background: rgba(45,217,143,0.15); color: var(--green); border: 1px solid rgba(45,217,143,0.25); }
+
+/* ── Content area ── */
+.content { flex: 1; overflow-y: auto; padding: 28px 32px; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── Section header ── */
+.section-header { margin-bottom: 22px; }
+.section-header h2 { font-size: 22px; font-weight: 500; letter-spacing: -0.4px; }
+.section-header p  { font-size: 13px; color: var(--text3); margin-top: 3px; }
+
+/* ── KPI strip ── */
+.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+.kpi {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.kpi:hover { border-color: var(--border2); }
+.kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent-color, var(--accent));
+  opacity: 0.6;
+}
+.kpi .kpi-label { font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+.kpi .kpi-val   { font-size: 26px; font-weight: 300; letter-spacing: -1px; line-height: 1; }
+.kpi .kpi-sub   { font-size: 11px; color: var(--text3); margin-top: 5px; }
+.kpi .kpi-delta { font-size: 11px; font-weight: 500; }
+.kpi-blue  { --accent-color: var(--accent); }
+.kpi-green { --accent-color: var(--green); }
+.kpi-red   { --accent-color: var(--red); }
+.kpi-amber { --accent-color: var(--amber); }
+.kpi-teal  { --accent-color: var(--teal); }
+
+/* ── Grid layouts ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-32 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-23 { display: grid; grid-template-columns: 1fr 1.6fr; gap: 16px; margin-bottom: 16px; }
+.span-2 { grid-column: span 2; }
+
+/* ── Cards ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border2); }
+.card-title {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.card-title::before {
+  content: '';
+  display: inline-block;
+  width: 3px; height: 12px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* ── Charts ── */
+.chart-wrap { position: relative; width: 100%; }
+
+/* ── Feature importance bars ── */
+.feat-row { display: flex; align-items: center; gap: 8px; margin: 7px 0; }
+.feat-name { width: 130px; font-size: 11px; color: var(--text2); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.feat-bar-bg { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+.feat-bar    { height: 100%; border-radius: 3px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+.feat-pct    { font-size: 10px; color: var(--text3); width: 36px; font-family: var(--mono); }
+
+/* ── SHAP bars ── */
+.shap-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+.shap-feat { width: 120px; font-size: 11px; color: var(--text2); text-align: right; flex-shrink: 0; }
+.shap-mid  { flex: 1; position: relative; height: 20px; }
+.shap-zero { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--border2); }
+.shap-fill { position: absolute; top: 3px; height: 14px; border-radius: 2px; transition: all 1s ease; }
+.shap-num  { font-size: 10px; font-family: var(--mono); width: 52px; }
+
+/* ── Risk gauge ── */
+.gauge-wrap { display: flex; flex-direction: column; align-items: center; }
+.gauge-number { font-size: 42px; font-weight: 300; letter-spacing: -2px; margin-top: -16px; }
+.gauge-label  { font-size: 11px; color: var(--text3); margin-top: 2px; letter-spacing: 0.5px; }
+
+/* ── Stage pipeline ── */
+.pipeline { display: flex; align-items: center; gap: 0; margin: 12px 0; }
+.pipe-step {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  text-align: center;
+}
+.pipe-step .ps-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; }
+.pipe-step .ps-val   { font-size: 20px; font-weight: 300; margin-top: 2px; letter-spacing: -0.5px; }
+.pipe-arrow { padding: 0 8px; color: var(--text3); font-size: 16px; }
+
+/* ── Strategy cards ── */
+.strategy-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--s-color, var(--accent));
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+}
+.strategy-card:hover { background: var(--bg4); border-color: var(--s-color, var(--accent)); border-left-color: var(--s-color, var(--accent)); }
+.sc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.sc-title   { font-size: 13px; font-weight: 500; color: var(--text); }
+.sc-priority { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; letter-spacing: 0.3px; white-space: nowrap; }
+.p-critical { background: rgba(255,92,124,0.15); color: var(--red); }
+.p-high     { background: rgba(255,179,71,0.15); color: var(--amber); }
+.p-medium   { background: rgba(34,211,238,0.12); color: var(--teal); }
+.sc-body    { font-size: 12px; color: var(--text3); line-height: 1.6; }
+.sc-meta    { display: flex; gap: 12px; margin-top: 8px; }
+.sc-tag     { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+.sc-tag span { color: var(--text2); }
+
+/* ── Profile grid ── */
+.profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.pf-item { background: var(--bg3); border-radius: 8px; padding: 8px 12px; }
+.pf-key  { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 2px; }
+.pf-val  { font-size: 12px; color: var(--text); font-weight: 500; }
+
+/* ── Model health ── */
+.health-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.health-row:last-child { border-bottom: none; }
+.health-label { font-size: 12px; color: var(--text2); width: 110px; flex-shrink: 0; }
+.health-bar-bg { flex: 1; height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+.health-bar    { height: 100%; border-radius: 2px; }
+.health-val    { font-size: 11px; font-family: var(--mono); color: var(--text2); width: 48px; text-align: right; }
+
+/* ── Table ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th { text-align: left; padding: 8px 12px; color: var(--text3); font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 1px solid var(--border); font-weight: 400; }
+.data-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text2); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
+.td-up   { color: var(--red); }
+.td-down { color: var(--green); }
+
+/* ── Animations ── */
+@keyframes fadeUp   { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+@keyframes countUp  { from { opacity:0; } to { opacity:1; } }
+.page.active .card  { animation: fadeUp 0.4s ease both; }
+.page.active .kpi   { animation: fadeUp 0.35s ease both; }
+.page.active .kpi:nth-child(1) { animation-delay: 0s; }
+.page.active .kpi:nth-child(2) { animation-delay: .05s; }
+.page.active .kpi:nth-child(3) { animation-delay: .10s; }
+.page.active .kpi:nth-child(4) { animation-delay: .15s; }
+.page.active .kpi:nth-child(5) { animation-delay: .20s; }
+
+/* ── RESPONSIVE DESIGN ── */
+@media (max-width: 1400px) {
+  .grid-32 { grid-template-columns: 1fr; }
+  .grid-23 { grid-template-columns: 1fr; }
+  .span-2 { grid-column: span 1; }
+}
+
+@media (max-width: 1024px) {
+  .sidebar { width: 180px; min-width: 180px; }
+  .sidebar-logo .wordmark { font-size: 18px; }
+  .nav-item { font-size: 12px; padding: 8px 16px; }
+  .nav-section { font-size: 9px; padding: 8px 16px 4px; }
+  .kpi-row { grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .kpi { padding: 14px 16px; }
+  .kpi .kpi-label { font-size: 9px; margin-bottom: 6px; }
+  .kpi .kpi-val { font-size: 22px; }
+  .grid-2 { gap: 12px; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .topbar { padding: 12px 20px; font-size: 14px; }
+  .content { padding: 16px 20px; }
+  .card { padding: 16px 18px; }
+  .card-title { font-size: 11px; margin-bottom: 10px; }
+  .chart-wrap { height: 200px; }
+}
+
+@media (max-width: 768px) {
+  .shell { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .sidebar-nav { padding: 8px 0; overflow-x: auto; display: flex; flex-wrap: wrap; }
+  .nav-section { display: none; }
+  .nav-item { padding: 8px 12px; font-size: 11px; border-left: none; border-bottom: 2px solid transparent; }
+  .nav-item.active { border-left: none; border-bottom-color: var(--accent); background: rgba(79,143,255,0.04); }
+  .sidebar-footer { padding: 8px 12px; font-size: 10px; }
+  .main { flex: 1; }
+  .content { padding: 12px 16px; }
+  .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+  .kpi { padding: 12px 14px; }
+  .kpi .kpi-label { font-size: 8px; margin-bottom: 4px; }
+  .kpi .kpi-val { font-size: 18px; }
+  .kpi .kpi-sub { font-size: 9px; }
+  .grid-2 { grid-template-columns: 1fr; gap: 10px; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-32 { grid-template-columns: 1fr; }
+  .grid-23 { grid-template-columns: 1fr; }
+  .card { padding: 12px 14px; border-radius: 10px; }
+  .card-title { font-size: 10px; margin-bottom: 8px; }
+  .topbar { padding: 10px 14px; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .topbar-title { font-size: 13px; }
+  .topbar-badges { flex-wrap: wrap; gap: 4px; }
+  .badge { font-size: 9px; padding: 3px 8px; }
+  .section-header h2 { font-size: 18px; }
+  .section-header p { font-size: 12px; }
+  .pipeline { flex-direction: column; }
+  .pipe-step { margin-bottom: 8px; }
+  .pipe-arrow { transform: rotate(90deg); padding: 4px 0; }
+  .profile-grid { grid-template-columns: 1fr; }
+  .strategy-card { padding: 12px 14px; margin-bottom: 8px; }
+  .sc-title { font-size: 12px; }
+  .sc-body { font-size: 11px; }
+  .sc-header { flex-direction: column; gap: 6px; }
+  .sc-priority { align-self: flex-start; }
+  .feat-name { width: 100px; }
+  .shap-feat { width: 90px; }
+  .data-table { font-size: 11px; }
+  .data-table th { font-size: 9px; padding: 6px 8px; }
+  .data-table td { padding: 6px 8px; }
+  .chart-wrap { height: 180px; }
+  .gaugeNumber { font-size: 36px; }
+  .health-label { width: 90px; font-size: 11px; }
+}
+
+@media (max-width: 480px) {
+  .kpi-row { grid-template-columns: 1fr; }
+  .kpi { padding: 10px 12px; }
+  .kpi .kpi-val { font-size: 16px; }
+  .section-header h2 { font-size: 16px; }
+  .card { padding: 10px 12px; }
+  .card-title { font-size: 9px; margin-bottom: 6px; }
+  .topbar-title { font-size: 12px; }
+  .topbar-badges { display: none; }
+  .strategy-card { padding: 10px 12px; }
+  .sidebar-logo .wordmark { font-size: 16px; }
+  .nav-item { font-size: 10px; padding: 6px 10px; }
+  .chart-wrap { height: 150px; }
+  .feat-name { width: 80px; font-size: 9px; }
+  .data-table { font-size: 10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="wordmark">ChurnIQ</div>
+    <div class="sub">Customer Intelligence</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Analytics</div>
+    <div class="nav-item active" onclick="showPage('overview',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".7"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".7"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".7"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".7"/></svg>
+      Overview
+    </div>
+    <div class="nav-item" onclick="showPage('prediction',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Prediction
+    </div>
+    <div class="nav-section">Models</div>
+    <div class="nav-item" onclick="showPage('shap',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 12h2V6H2zm4 0h2V2H6zm4 0h2V8h-2z" fill="currentColor" opacity=".8"/></svg>
+      SHAP Explainer
+    </div>
+    <div class="nav-item" onclick="showPage('performance',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 13l3-4 3 2 3-5 3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Model Performance
+    </div>
+    <div class="nav-section">Strategy</div>
+    <div class="nav-item" onclick="showPage('strategy',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Retention Strategy
+    </div>
+    <div class="nav-section">Intelligence</div>
+    <div class="nav-item" onclick="showPage('aisuggestions',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M3 2h10c.552 0 1 .448 1 1v10c0 .552-.448 1-1 1H3c-.552 0-1-.448-1-1V3c0-.552.448-1 1-1zM8 5v6M5 8h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      AI Suggestions
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <span class="status-dot"></span>Models active &nbsp;·&nbsp; XGB + Ridge
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<div class="main">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-title">Customer Analysis <span>ID #C-20241127</span></div>
+    <div class="topbar-badges">
+      <span class="badge badge-live">● Live</span>
+      <span id="tb-risk" class="badge badge-medium" style="display:none">—</span>
+      <span style="font-size:11px;color:var(--text3)">25 months tenure</span>
+    </div>
+  </div>
+
+  <!-- ── PAGE: OVERVIEW ── -->
+  <div class="content">
+  <div id="page-overview" class="page active">
+    <div class="section-header">
+      <h2>Dashboard Overview</h2>
+      <p>Real-time churn intelligence across model signals, behavior patterns, and business metrics</p>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi kpi-amber">
+        <div class="kpi-label">Churn Probability</div>
+        <div class="kpi-val" style="color:var(--amber)">31.2<span style="font-size:16px">%</span></div>
+        <div class="kpi-sub kpi-delta" style="color:var(--amber)">↑ Medium Risk</div>
+      </div>
+      <div class="kpi kpi-blue">
+        <div class="kpi-label">XGBoost AUC</div>
+        <div class="kpi-val" style="color:var(--accent)">0.849</div>
+        <div class="kpi-sub">Training set</div>
+      </div>
+      <div class="kpi kpi-green">
+        <div class="kpi-label">Ridge AUC</div>
+        <div class="kpi-val" style="color:var(--green)">0.697</div>
+        <div class="kpi-sub">Stage 1 model</div>
+      </div>
+      <div class="kpi kpi-teal">
+        <div class="kpi-label">Tenure</div>
+        <div class="kpi-val" style="color:var(--teal)">25<span style="font-size:16px">mo</span></div>
+        <div class="kpi-sub">↓ Below avg retention</div>
+      </div>
+      <div class="kpi kpi-red">
+        <div class="kpi-label">Monthly Value</div>
+        <div class="kpi-val" style="color:var(--red)">$90</div>
+        <div class="kpi-sub">High-value segment</div>
+      </div>
+    </div>
+
+    <div class="grid-32">
+      <div class="card">
+        <div class="card-title">Churn Rate by Tenure Segment</div>
+        <div class="chart-wrap" style="height:220px"><canvas id="tenure-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Churn Rate by Contract Type</div>
+        <div class="chart-wrap" style="height:220px"><canvas id="contract-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title">Model Accuracy Summary</div>
+        <div id="model-health"></div>
+      </div>
+      <div class="card span-2">
+        <div class="card-title">XGBoost Feature Importance</div>
+        <div id="feat-importance"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: PREDICTION ── -->
+  <div id="page-prediction" class="page">
+    <div class="section-header">
+      <h2>Prediction Results</h2>
+      <p>Two-stage pipeline · Ridge Classifier → XGBoost · Enter customer data below</p>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">Customer Input Form</div>
+      <form id="predictionForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;font-size:12px">
+        <!-- Demographics -->
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Gender</label>
+          <select id="gender" name="gender" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="Male">Male</option><option value="Female">Female</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Senior Citizen</label>
+          <select id="senior_citizen" name="senior_citizen" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="0">No</option><option value="1">Yes</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Partner</label>
+          <select id="partner" name="partner" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="Yes">Yes</option><option value="No">No</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Dependents</label>
+          <select id="dependents" name="dependents" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="Yes">Yes</option><option value="No">No</option>
+          </select>
+        </div>
+
+        <!-- Services -->
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Phone Service</label>
+          <select id="phone_service" name="phone_service" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="Yes">Yes</option><option value="No">No</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Multiple Lines</label>
+          <select id="multiple_lines" name="multiple_lines" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="No">No</option><option value="Yes">Yes</option><option value="No phone service">No Phone Service</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Internet Service</label>
+          <select id="internet_service" name="internet_service" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="DSL">DSL</option><option value="Fiber optic">Fiber optic</option><option value="No">No</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Online Security</label>
+          <select id="online_security" name="online_security" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="No">No</option><option value="Yes">Yes</option><option value="No internet service">No Internet Service</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Online Backup</label>
+          <select id="online_backup" name="online_backup" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="No">No</option><option value="Yes">Yes</option><option value="No internet service">No Internet Service</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Device Protection</label>
+          <select id="device_protection" name="device_protection" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="No">No</option><option value="Yes">Yes</option><option value="No internet service">No Internet Service</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Tech Support</label>
+          <select id="tech_support" name="tech_support" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="No">No</option><option value="Yes">Yes</option><option value="No internet service">No Internet Service</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Streaming TV</label>
+          <select id="streaming_tv" name="streaming_tv" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="No">No</option><option value="Yes">Yes</option><option value="No internet service">No Internet Service</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Streaming Movies</label>
+          <select id="streaming_movies" name="streaming_movies" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="No">No</option><option value="Yes">Yes</option><option value="No internet service">No Internet Service</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Contract</label>
+          <select id="contract" name="contract" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="Month-to-month">Month-to-month</option><option value="One year">One year</option><option value="Two year">Two year</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Paperless Billing</label>
+          <select id="paperless_billing" name="paperless_billing" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="Yes">Yes</option><option value="No">No</option>
+          </select>
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Payment Method</label>
+          <select id="payment_method" name="payment_method" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="Electronic check">Electronic check</option><option value="Mailed check">Mailed check</option><option value="Bank transfer (automatic)">Bank transfer</option><option value="Credit card (automatic)">Credit card</option>
+          </select>
+        </div>
+
+        <!-- Numeric -->
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Tenure (months)</label>
+          <input type="number" id="tenure" name="tenure" value="25" min="0" max="72" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Monthly Charges ($)</label>
+          <input type="number" id="monthly_charges" name="monthly_charges" value="89.99" min="0" step="0.01" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+        </div>
+        <div><label style="display:block;font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">Total Charges ($)</label>
+          <input type="number" id="total_charges" name="total_charges" value="1800" min="0" step="0.01" style="width:100%;padding:6px;background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px">
+        </div>
+      </form>
+      <button onclick="makePrediction()" style="margin-top:14px;padding:10px 20px;background:linear-gradient(135deg,#2a5fd4,#4f8fff);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:500;font-size:13px;width:100%;font-family:inherit;letter-spacing:0.2px;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">🚀 Run Prediction</button>
+    </div>
+
+    <div id="predictionResults" style="display:none">
+      <div class="grid-32">
+        <div class="card">
+          <div class="card-title">Churn Risk Gauge</div>
+          <div class="gauge-wrap">
+            <div class="chart-wrap" style="height:170px; width:100%"><canvas id="gauge-chart"></canvas></div>
+            <div id="gaugeNumber" class="gauge-number">--</div>
+            <div class="gauge-label">Final churn probability · XGBoost</div>
+            <span id="riskBadge" class="badge">Medium Risk</span>
+          </div>
+
+          <div style="margin-top:20px">
+            <div class="card-title">Two-Stage Pipeline</div>
+            <div class="pipeline">
+              <div class="pipe-step">
+                <div class="ps-label">Ridge</div>
+                <div id="ridgeVal" class="ps-val" style="color:var(--accent)">--</div>
+              </div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step">
+                <div class="ps-label">XGBoost</div>
+                <div id="xgbVal" class="ps-val" style="color:var(--amber)">--</div>
+              </div>
+            </div>
+            <div style="font-size:11px; color:var(--text3); margin-top:8px; line-height:1.5">
+              Ridge output is passed as a meta-feature into XGBoost for final calibration. XGBoost AUC 0.849 vs Ridge 0.697 — a <span style="color:var(--green)">21.8% lift</span>.
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-title">Feature Importance (SHAP)</div>
+            <div id="featureImportanceDisplay" style="font-size:11px"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">AI Retention Strategy</div>
+            <div id="strategyDisplay" style="font-size:11px;line-height:1.6;color:var(--text3)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: SHAP ── -->
+  <div id="page-shap" class="page">
+    <div class="section-header">
+      <h2>SHAP Explainability</h2>
+      <p>Model-agnostic feature attribution for this customer · TreeExplainer on XGBoost</p>
+    </div>
+
+    <div class="kpi-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="kpi kpi-amber">
+        <div class="kpi-label">Base Value</div>
+        <div class="kpi-val" style="color:var(--text2); font-size:20px">−1.381</div>
+        <div class="kpi-sub">Log-odds baseline</div>
+      </div>
+      <div class="kpi kpi-red">
+        <div class="kpi-label">Risk Factors</div>
+        <div id="shap-risk-count" class="kpi-val" style="color:var(--red); font-size:22px">—</div>
+        <div class="kpi-sub">Features pushing up</div>
+      </div>
+      <div class="kpi kpi-green">
+        <div class="kpi-label">Protective Factors</div>
+        <div id="shap-prot-count" class="kpi-val" style="color:var(--green); font-size:22px">—</div>
+        <div class="kpi-sub">Features pulling down</div>
+      </div>
+      <div class="kpi kpi-blue">
+        <div class="kpi-label">Top Driver</div>
+        <div id="shap-top-driver" class="kpi-val" style="color:var(--accent); font-size:14px; letter-spacing:-0.3px; margin-top:4px">Run prediction</div>
+        <div id="shap-top-val" class="kpi-sub">SHAP —</div>
+      </div>
+    </div>
+
+    <div class="grid-23">
+      <div class="card">
+        <div class="card-title">SHAP Waterfall</div>
+        <div id="shap-no-pred" style="text-align:center;padding:60px 0;color:var(--text3);font-size:13px">Run a prediction first to see the waterfall.</div>
+        <div class="chart-wrap" style="height:320px;display:none"><canvas id="shap-waterfall"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Feature Attribution (All Features)</div>
+        <div id="shap-bars-full" style="padding-top:4px"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Feature Attribution Summary Table</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Feature</th><th>Customer Value</th><th>SHAP Impact</th><th>Direction</th><th>Business Interpretation</th></tr>
+        </thead>
+        <tbody id="shap-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── PAGE: PERFORMANCE ── -->
+  <div id="page-performance" class="page">
+    <div class="section-header">
+      <h2>Model Performance</h2>
+      <p>Evaluation metrics, ROC curves, calibration analysis, and cross-validation results</p>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi kpi-blue">
+        <div class="kpi-label">XGB Train AUC</div>
+        <div class="kpi-val" style="color:var(--accent)">0.849</div>
+        <div class="kpi-sub">On 7,043 samples</div>
+      </div>
+      <div class="kpi kpi-green">
+        <div class="kpi-label">Ridge Train AUC</div>
+        <div class="kpi-val" style="color:var(--green)">0.697</div>
+        <div class="kpi-sub">L2 logistic</div>
+      </div>
+      <div class="kpi kpi-teal">
+        <div class="kpi-label">XGB CV AUC</div>
+        <div class="kpi-val" style="color:var(--teal)">0.919</div>
+        <div class="kpi-sub">From provided files</div>
+      </div>
+      <div class="kpi kpi-amber">
+        <div class="kpi-label">XGB F1 Score</div>
+        <div class="kpi-val" style="color:var(--amber)">0.330</div>
+        <div class="kpi-sub">At 0.5 threshold</div>
+      </div>
+      <div class="kpi kpi-red">
+        <div class="kpi-label">Churn Rate</div>
+        <div class="kpi-val" style="color:var(--red)">20.2<span style="font-size:16px">%</span></div>
+        <div class="kpi-sub">Class imbalance</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">ROC Curves</div>
+        <div class="chart-wrap" style="height:250px"><canvas id="roc-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Probability Distribution by Class</div>
+        <div class="chart-wrap" style="height:250px"><canvas id="hist-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">20-Fold Cross-Validation AUC</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cv-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Calibration Curve (XGBoost)</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cal-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Detailed Metrics Comparison</div>
+      <table class="data-table">
+        <thead><tr><th>Metric</th><th>XGBoost</th><th>Ridge</th><th>Delta</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>AUC (train)</td><td style="color:var(--accent)">0.8491</td><td>0.6974</td><td class="td-up">+21.7%</td><td style="color:var(--text3)">XGB captures non-linear patterns</td></tr>
+          <tr><td>AUC (20-fold CV)</td><td style="color:var(--accent)">0.9194</td><td>0.9103</td><td class="td-up">+1.0%</td><td style="color:var(--text3)">From provided pkl score files</td></tr>
+          <tr><td>Accuracy</td><td>0.829</td><td>0.798</td><td class="td-up">+3.9%</td><td style="color:var(--text3)">Misleading with imbalanced classes</td></tr>
+          <tr><td>F1 Score</td><td style="color:var(--amber)">0.330</td><td>0.033</td><td class="td-up">+900%</td><td style="color:var(--text3)">Ridge near-zero due to low recall</td></tr>
+          <tr><td>Precision</td><td style="color:var(--green)">0.796</td><td>0.522</td><td class="td-up">+52.5%</td><td style="color:var(--text3)">XGB high precision, fewer false alarms</td></tr>
+          <tr><td>Recall</td><td>0.208</td><td>0.017</td><td class="td-up">+1124%</td><td style="color:var(--text3)">Low recall → consider threshold tuning</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── PAGE: STRATEGY ── -->
+  <div id="page-strategy" class="page">
+    <div class="section-header">
+      <h2>Retention Strategy</h2>
+      <p>AI-generated, SHAP-driven action plan · Personalised to last predicted customer · Powered by Groq LLM</p>
+    </div>
+
+    <div class="kpi-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="kpi kpi-red">
+        <div class="kpi-label">Risk Score</div>
+        <div id="st-risk-val" class="kpi-val" style="color:var(--amber)">—</div>
+        <div id="st-risk-sub" class="kpi-sub">Run a prediction first</div>
+      </div>
+      <div class="kpi kpi-green">
+        <div class="kpi-label">Est. Lifetime Value</div>
+        <div id="st-ltv" class="kpi-val" style="color:var(--green)">—</div>
+        <div class="kpi-sub">36-month projection</div>
+      </div>
+      <div class="kpi kpi-amber">
+        <div class="kpi-label">Retention Budget</div>
+        <div id="st-budget" class="kpi-val" style="color:var(--amber)">—</div>
+        <div class="kpi-sub">Recommended max spend</div>
+      </div>
+      <div class="kpi kpi-teal">
+        <div class="kpi-label">Urgency Window</div>
+        <div id="st-urgency" class="kpi-val" style="color:var(--teal)">—</div>
+        <div class="kpi-sub">Days to act</div>
+      </div>
+    </div>
+
+    <div id="strategy-no-pred" style="text-align:center;padding:60px 0;color:var(--text3);font-size:13px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:16px">
+      Run a prediction to generate a personalised retention strategy.
+    </div>
+
+    <div id="strategy-content" style="display:none">
+      <div class="grid-2" style="margin-bottom:16px">
+        <div id="strategy-cards-left"></div>
+        <div>
+          <div id="strategy-cards-right"></div>
+          <div class="card" style="margin-top:0">
+            <div class="card-title">Cumulative Risk Reduction</div>
+            <div class="chart-wrap" style="height:160px"><canvas id="strategy-impact"></canvas></div>
+            <div id="strategy-impact-note" style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5"></div>
+          </div>
+        </div>
+      </div>
+      <div id="strategy-source-note" style="font-size:11px;color:var(--text3);margin-top:4px;text-align:right;font-style:italic"></div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: AI SUGGESTIONS ── -->
+  <div id="page-aisuggestions" class="page">
+    <div class="section-header">
+      <h2>AI Intelligence & Recommendations</h2>
+      <p>Machine-learned insights powered by XGBoost and SHAP analysis · Real-time decision support</p>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi kpi-blue">
+        <div class="kpi-label">AI Confidence</div>
+        <div class="kpi-val" style="color:var(--accent)">87%</div>
+        <div class="kpi-sub">Pattern strength</div>
+      </div>
+      <div class="kpi kpi-green">
+        <div class="kpi-label">Success Rate</div>
+        <div class="kpi-val" style="color:var(--green)">73%</div>
+        <div class="kpi-sub">Historical retention</div>
+      </div>
+      <div class="kpi kpi-amber">
+        <div class="kpi-label">Next Best Action</div>
+        <div class="kpi-val" style="color:var(--amber); font-size:14px; margin-top:4px">Contract</div>
+        <div class="kpi-sub">Upgrade</div>
+      </div>
+      <div class="kpi kpi-red">
+        <div class="kpi-label">Churn Window</div>
+        <div class="kpi-val" style="color:var(--red)">30<span style="font-size:14px">d</span></div>
+        <div class="kpi-sub">Critical period</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">🎯 Primary Recommendation</div>
+        <div style="padding:16px 0">
+          <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:8px">Contract Upgrade to 12-Month</div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:12px">
+            AI analysis shows <span style="color:var(--amber)">month-to-month contracts correlate with 2.4x higher churn</span>. This customer has 25 months tenure and is a high-value target ($1,800 lifetime spend). Offering a 12-month commitment at 15% discount would reduce predicted churn from 31% to ~13%.
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <span style="background:rgba(79,143,255,0.15);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:11px">Impact: High</span>
+            <span style="background:rgba(79,143,255,0.15);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:11px">Confidence: 94%</span>
+            <span style="background:rgba(79,143,255,0.15);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:11px">Priority: Critical</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚡ Secondary Insights</div>
+        <div style="padding:8px 0">
+          <div style="padding:12px;background:rgba(45,217,143,0.08);border-left:3px solid var(--green);border-radius:0 6px 6px 0;margin-bottom:8px">
+            <div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:2px">Tech Support Active (Protective)</div>
+            <div style="font-size:10px;color:var(--text3)">Current tech support reduces risk by 0.45 on SHAP scale — continue to promote/maintain</div>
+          </div>
+          <div style="padding:12px;background:rgba(255,92,124,0.08);border-left:3px solid var(--red);border-radius:0 6px 6px 0;margin-bottom:8px">
+            <div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:2px">Online Security Missing (Risk)</div>
+            <div style="font-size:10px;color:var(--text3)">Absence of security service increases churn signal by 0.22 — bundle with contract offer</div>
+          </div>
+          <div style="padding:12px;background:rgba(255,179,71,0.08);border-left:3px solid var(--amber);border-radius:0 6px 6px 0">
+            <div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:2px">Fiber Optic High-Risk Segment</div>
+            <div style="font-size:10px;color:var(--text3)">Fiber customers face 2x competitive pressure — add speed/quality assurance messaging</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📊 Predictive Timeline</div>
+        <div style="padding:12px 0">
+          <div style="margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:11px;color:var(--text2)">Days until churn risk peaks</span>
+              <span style="font-size:11px;font-weight:500;color:var(--amber)">30 days</span>
+            </div>
+            <div style="width:100%;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+              <div style="width:85%;height:100%;background:linear-gradient(to right,var(--green),var(--amber),var(--red));border-radius:3px"></div>
+            </div>
+          </div>
+          <div style="margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:11px;color:var(--text2)">Max retention window</span>
+              <span style="font-size:11px;font-weight:500;color:var(--green)">45 days</span>
+            </div>
+            <div style="width:100%;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+              <div style="width:100%;height:100%;background:linear-gradient(to right,var(--green),var(--green));border-radius:3px;opacity:0.6"></div>
+            </div>
+          </div>
+          <div style="background:rgba(34,211,238,0.08);padding:10px;border-radius:6px;border-left:3px solid var(--teal)">
+            <div style="font-size:10px;color:var(--text3);line-height:1.6">
+              <span style="color:var(--teal);font-weight:500">Optimal action window:</span> Next 14 days. Contact should happen by day 7 for maximum impact.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💡 Smart Segmentation</div>
+        <div style="padding:8px 0">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div style="background:var(--bg3);padding:10px;border-radius:6px">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:2px">Segment</div>
+              <div style="font-size:12px;font-weight:500;color:var(--text)">High-Value At-Risk</div>
+            </div>
+            <div style="background:var(--bg3);padding:10px;border-radius:6px">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:2px">LTV Impact</div>
+              <div style="font-size:12px;font-weight:500;color:var(--green)">$3,240 at stake</div>
+            </div>
+          </div>
+          <div style="background:LinearGradient(135deg, rgba(79,143,255,0.1), rgba(45,217,143,0.05));padding:12px;border-radius:6px;border:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:6px">Peer Benchmarks</div>
+            <div style="font-size:10px;color:var(--text3);line-height:1.7">
+              • <strong>Avg churn for this segment:</strong> 28%<br>
+              • <strong>This customer:</strong> 31.2% (slightly above)<br>
+              • <strong>With interventions:</strong> 9.2% projected<br>
+              • <strong>Retention improvement:</strong> +68%
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔔 Recommended Action Sequence</div>
+      <div style="padding:8px 0">
+        <div style="display:flex;gap:0;margin-bottom:16px;overflow-x:auto;padding-bottom:8px">
+          <div style="flex-shrink:0;width:160px;background:rgba(79,143,255,0.1);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center;margin-right:8px">
+            <div style="font-size:20px;margin-bottom:4px">1️⃣</div>
+            <div style="font-size:10px;color:var(--text2);font-weight:500;margin-bottom:6px">Day 1-2</div>
+            <div style="font-size:10px;color:var(--text3);line-height:1.5"><strong style="color:var(--text)">Outreach Call</strong><br>Acknowledge value, discuss needs</div>
+          </div>
+          <div style="flex-shrink:0;width:160px;background:rgba(255,179,71,0.1);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center;margin-right:8px">
+            <div style="font-size:20px;margin-bottom:4px">2️⃣</div>
+            <div style="font-size:10px;color:var(--text2);font-weight:500;margin-bottom:6px">Day 3-4</div>
+            <div style="font-size:10px;color:var(--text3);line-height:1.5"><strong style="color:var(--text)">Contract Offer</strong><br>12-month + Security bundle</div>
+          </div>
+          <div style="flex-shrink:0;width:160px;background:rgba(45,217,143,0.1);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center;margin-right:8px">
+            <div style="font-size:20px;margin-bottom:4px">3️⃣</div>
+            <div style="font-size:10px;color:var(--text2);font-weight:500;margin-bottom:6px">Day 7</div>
+            <div style="font-size:10px;color:var(--text3);line-height:1.5"><strong style="color:var(--text)">Follow-up Email</strong><br>Incentive + testimonials</div>
+          </div>
+          <div style="flex-shrink:0;width:160px;background:rgba(34,211,238,0.1);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center">
+            <div style="font-size:20px;margin-bottom:4px">4️⃣</div>
+            <div style="font-size:10px;color:var(--text2);font-weight:500;margin-bottom:6px">Day 14</div>
+            <div style="font-size:10px;color:var(--text3);line-height:1.5"><strong style="color:var(--text)">Final Touch</strong><br>VIP support tier upgrade</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📈 Offer Sensitivity Analysis</div>
+        <div class="chart-wrap" style="height:220px"><canvas id="sensitivity-chart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">✅ Expected Outcomes</div>
+        <div style="padding:12px 0">
+          <div style="padding:12px;background:var(--bg3);border-radius:6px;margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:11px;color:var(--text2)">Acceptance Probability</span>
+              <span style="font-size:12px;font-weight:500;color:var(--green)">73%</span>
+            </div>
+            <div style="width:100%;height:4px;background:var(--bg2);border-radius:2px;overflow:hidden">
+              <div style="width:73%;height:100%;background:var(--green);border-radius:2px"></div>
+            </div>
+          </div>
+          <div style="padding:12px;background:var(--bg3);border-radius:6px;margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:11px;color:var(--text2)">Churn Risk Reduction</span>
+              <span style="font-size:12px;font-weight:500;color:var(--green)">-68%</span>
+            </div>
+            <div style="width:100%;height:4px;background:var(--bg2);border-radius:2px;overflow:hidden">
+              <div style="width:68%;height:100%;background:var(--green);border-radius:2px"></div>
+            </div>
+          </div>
+          <div style="padding:12px;background:var(--bg3);border-radius:6px;margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:11px;color:var(--text2)">ROI on Intervention</span>
+              <span style="font-size:12px;font-weight:500;color:var(--green)">+542%</span>
+            </div>
+            <div style="width:100%;height:4px;background:var(--bg2);border-radius:2px;overflow:hidden">
+              <div style="width:100%;height:100%;background:var(--green);border-radius:2px"></div>
+            </div>
+          </div>
+          <div style="padding:10px;background:rgba(79,143,255,0.08);border-left:3px solid var(--accent);border-radius:0 4px 4px 0;margin-top:12px">
+            <div style="font-size:9px;color:var(--text3);line-height:1.6">
+              Expected lifetime value increases from $3,240 (without action) to $4,890 (with successful retention). Cost of intervention: ~$90.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+      </div>
+    </div>
+  </div>
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+/* ── Navigation ── */
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+/* ── Data ── */
+const COLORS = { blue:'#4f8fff', green:'#2dd98f', red:'#ff5c7c', amber:'#ffb347', teal:'#22d3ee', purple:'#a78bfa' };
+const gridColor = 'rgba(255,255,255,0.05)';
+const tickColor = '#5a6278';
+
+const baseOpts = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1c2233', titleColor: '#e8eaf0', bodyColor: '#8b93a8', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10 } },
+  scales: { x: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 } } }, y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 } } } }
+};
+
+/* ── Chart Registry (prevent canvas reuse errors) ── */
+const chartRegistry = {
+  'tenure-chart': null,
+  'contract-chart': null,
+  'gauge-chart': null,
+  'shap-waterfall': null,
+  'strategy-impact': null,
+  'roc-chart': null,
+  'hist-chart': null,
+  'cv-chart': null,
+  'cal-chart': null,
+  'sensitivity-chart': null,
+};
+
+function createChart(chartId, chartConfig) {
+  if (chartRegistry[chartId]) {
+    chartRegistry[chartId].destroy();
+  }
+  chartRegistry[chartId] = new Chart(document.getElementById(chartId), chartConfig);
+  return chartRegistry[chartId];
+}
+
+function destroyAllCharts() {
+  Object.keys(chartRegistry).forEach(key => {
+    if (chartRegistry[key]) {
+      chartRegistry[key].destroy();
+      chartRegistry[key] = null;
+    }
+  });
+}
+
+/* ── Tenure chart ── */
+createChart('tenure-chart', {
+  type: 'bar',
+  data: {
+    labels: ['0-6 mo','7-12 mo','13-24 mo','25-36 mo','37-60 mo','61-72 mo'],
+    datasets: [{
+      data: [28.3, 24.6, 23.9, 19.4, 17.9, 15.1],
+      backgroundColor: ['rgba(255,92,124,0.75)','rgba(255,92,124,0.65)','rgba(255,179,71,0.65)','rgba(255,179,71,0.5)','rgba(45,217,143,0.5)','rgba(45,217,143,0.7)'],
+      borderRadius: 5, borderSkipped: false
+    }]
+  },
+  options: { ...baseOpts, plugins: { ...baseOpts.plugins }, scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, ticks: { ...baseOpts.scales.y.ticks, callback: v => v + '%' } } } }
+});
+
+/* ── Contract chart ── */
+createChart('contract-chart', {
+  type: 'bar',
+  data: {
+    labels: ['Month-to-month', 'One year', 'Two year'],
+    datasets: [{
+      data: [28.1, 10.6, 10.8],
+      backgroundColor: ['rgba(255,92,124,0.75)', 'rgba(45,217,143,0.6)', 'rgba(45,217,143,0.7)'],
+      borderRadius: 5, borderSkipped: false
+    }]
+  },
+  options: { ...baseOpts, scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, ticks: { ...baseOpts.scales.y.ticks, callback: v => v + '%' } } } }
+});
+
+/* ── Model health ── */
+const healthData = [
+  { label: 'XGB Train AUC',  val: 0.849, max: 1.0, color: COLORS.blue },
+  { label: 'Ridge Train AUC',val: 0.697, max: 1.0, color: COLORS.green },
+  { label: 'XGB CV AUC',     val: 0.919, max: 1.0, color: COLORS.teal },
+  { label: 'XGB Accuracy',   val: 0.829, max: 1.0, color: COLORS.amber },
+  { label: 'XGB Precision',  val: 0.796, max: 1.0, color: COLORS.purple },
+  { label: 'XGB F1',         val: 0.330, max: 1.0, color: COLORS.red },
+];
+const mhEl = document.getElementById('model-health');
+healthData.forEach(d => {
+  mhEl.innerHTML += `<div class="health-row">
+    <div class="health-label">${d.label}</div>
+    <div class="health-bar-bg"><div class="health-bar" style="width:${(d.val/d.max*100).toFixed(1)}%;background:${d.color}"></div></div>
+    <div class="health-val" style="color:${d.color}">${d.val.toFixed(3)}</div>
+  </div>`;
+});
+
+/* ── Feature importance ── */
+const featData = [
+  { name: 'Contract',         val: 0.2475 },
+  { name: 'InternetService',  val: 0.0748 },
+  { name: 'PaperlessBilling', val: 0.0693 },
+  { name: 'TechSupport',      val: 0.0668 },
+  { name: 'OnlineSecurity',   val: 0.0572 },
+  { name: 'PaymentMethod',    val: 0.0458 },
+  { name: 'tenure',           val: 0.0437 },
+  { name: 'Partner',          val: 0.0389 },
+  { name: 'SeniorCitizen',    val: 0.0368 },
+  { name: 'MultipleLines',    val: 0.0355 },
+];
+const fiEl = document.getElementById('feat-importance');
+const maxFi = featData[0].val;
+featData.forEach((d,i) => {
+  const pct = (d.val / maxFi * 100).toFixed(1);
+  const colors = ['#4f8fff','#7c5cfc','#22d3ee','#2dd98f','#ffb347','#ff5c7c','#a78bfa','#4f8fff','#2dd98f','#ffb347'];
+  fiEl.innerHTML += `<div class="feat-row">
+    <div class="feat-name">${d.name}</div>
+    <div class="feat-bar-bg"><div class="feat-bar" style="width:${pct}%;background:${colors[i%colors.length]}"></div></div>
+    <div class="feat-pct">${(d.val*100).toFixed(1)}%</div>
+  </div>`;
+});
+
+/* ── Gauge ── */
+const gaugeProb = 31.2;
+createChart('gauge-chart', {
+  type: 'doughnut',
+  data: {
+    datasets: [{
+      data: [gaugeProb, 100 - gaugeProb],
+      backgroundColor: ['#ffb347', 'rgba(255,255,255,0.04)'],
+      borderWidth: 0,
+      circumference: 180,
+      rotation: 270
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '74%',
+    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+  }
+});
+
+/* ── SHAP bars full (populated by prediction) ── */
+// Initialised empty — filled by updateShapPage()
+
+/* ── SHAP waterfall (populated by prediction) ── */
+let waterfallChart = null;
+
+function updateShapPage(featureImportance, kpis) {
+  // Update KPI badges
+  document.getElementById('shap-risk-count').textContent = '+' + kpis.risk_count;
+  document.getElementById('shap-prot-count').textContent = '+' + kpis.prot_count;
+  document.getElementById('shap-top-driver').textContent = kpis.top_driver;
+  document.getElementById('shap-top-val').textContent = 'SHAP ' + (kpis.top_val >= 0 ? '+' : '') + kpis.top_val.toFixed(3);
+
+  // SHAP bars
+  const maxShap = Math.max(...featureImportance.map(d => Math.abs(d.shap_value)));
+  const shapEl = document.getElementById('shap-bars-full');
+  shapEl.innerHTML = '';
+  featureImportance.slice(0, 14).forEach(d => {
+    const pct = Math.abs(d.shap_value) / maxShap * 46;
+    const isPos = d.shap_value > 0;
+    const color = isPos ? COLORS.red : COLORS.green;
+    const left  = isPos ? 50 : (50 - pct);
+    shapEl.innerHTML += `<div class="shap-row">
+      <div class="shap-feat">${d.feature}</div>
+      <div class="shap-mid">
+        <div class="shap-zero"></div>
+        <div class="shap-fill" style="left:${left.toFixed(1)}%;width:${pct.toFixed(1)}%;background:${color};opacity:0.75"></div>
+      </div>
+      <div class="shap-num" style="color:${color}">${d.shap_value > 0 ? '+' : ''}${d.shap_value.toFixed(3)}</div>
+    </div>`;
+  });
+
+  // Waterfall chart
+  const top7 = featureImportance.slice(0, 7).reverse();
+  const wfLabels = top7.map(d => d.feature + ' (' + d.input_value + ')');
+  let cumBase = -1.3812;
+  const wfBases = [], wfSizes = [], wfColors = [];
+  top7.forEach(d => {
+    wfBases.push(cumBase);
+    wfSizes.push(Math.abs(d.shap_value));
+    wfColors.push(d.shap_value > 0 ? 'rgba(255,92,124,0.75)' : 'rgba(45,217,143,0.75)');
+    cumBase += d.shap_value;
+  });
+  const wfWrap = document.querySelector('#shap-waterfall').parentElement;
+  wfWrap.style.display = 'block';
+  document.getElementById('shap-no-pred').style.display = 'none';
+  if (waterfallChart) waterfallChart.destroy();
+  createChart('shap-waterfall', {
+    type: 'bar',
+    data: {
+      labels: wfLabels,
+      datasets: [{ data: wfSizes, base: wfBases, backgroundColor: wfColors, borderRadius: 4, borderSkipped: false }]
+    },
+    options: {
+      ...baseOpts, indexAxis: 'y',
+      scales: {
+        x: { ...baseOpts.scales.x, title: { display: true, text: 'Log-odds contribution', color: tickColor, font: { size: 10 } } },
+        y: { ...baseOpts.scales.y, ticks: { ...baseOpts.scales.y.ticks, font: { size: 10 } } }
+      }
+    }
+  });
+
+  // SHAP table
+  const tbody = document.getElementById('shap-table-body');
+  tbody.innerHTML = '';
+  featureImportance.forEach(d => {
+    const dir = d.shap_value > 0
+      ? `<span style="color:var(--red)">↑ Increases risk</span>`
+      : `<span style="color:var(--green)">↓ Decreases risk</span>`;
+    tbody.innerHTML += `<tr>
+      <td style="font-weight:500;color:var(--text)">${d.feature}</td>
+      <td style="font-family:var(--mono)">${d.input_value}</td>
+      <td style="font-family:var(--mono);color:${d.shap_value > 0 ? 'var(--red)' : 'var(--green)'}">${d.shap_value >= 0 ? '+' : ''}${d.shap_value.toFixed(4)}</td>
+      <td>${dir}</td>
+      <td style="font-size:11px;color:var(--text3)">${d.interpretation || ''}</td>
+    </tr>`;
+  });
+}
+
+/* ── Strategy page ── */
+let strategyImpactChart = null;
+
+function updateStrategyPage(strategyResult, businessMetrics, xgbProb) {
+  const prob = xgbProb;
+  const riskColor = prob > 0.65 ? 'var(--red)' : prob > 0.35 ? 'var(--amber)' : 'var(--green)';
+  const riskLabel = prob > 0.65 ? 'High' : prob > 0.35 ? 'Medium' : 'Low';
+
+  document.getElementById('st-risk-val').textContent  = (prob * 100).toFixed(1) + '%';
+  document.getElementById('st-risk-val').style.color  = riskColor;
+  document.getElementById('st-risk-sub').textContent  = riskLabel + ' — act within ' + businessMetrics.urgency + ' days';
+  document.getElementById('st-ltv').textContent       = '$' + businessMetrics.ltv_36.toLocaleString();
+  document.getElementById('st-budget').textContent    = '$' + businessMetrics.budget.toFixed(2);
+  document.getElementById('st-urgency').textContent   = businessMetrics.urgency + ' days';
+
+  const cards = strategyResult.cards || [];
+  const priorityMeta = {
+    'Critical': { cls: 'p-critical', color: 'var(--red)' },
+    'High':     { cls: 'p-high',     color: 'var(--amber)' },
+    'Medium':   { cls: 'p-medium',   color: 'var(--teal)' },
+  };
+
+  function cardHTML(c) {
+    const pm = priorityMeta[c.priority] || priorityMeta['Medium'];
+    return `<div class="strategy-card" style="--s-color:${pm.color}">
+      <div class="sc-header">
+        <div class="sc-title">${c.title}</div>
+        <span class="sc-priority ${pm.cls}">${c.priority} Priority</span>
+      </div>
+      <div class="sc-body">${c.body}</div>
+      <div class="sc-meta">
+        <div class="sc-tag">SHAP Driver <span>${c.shap_driver}</span></div>
+        <div class="sc-tag">SHAP Value <span>${c.shap_value}</span></div>
+        <div class="sc-tag">Expected Reduction <span>${c.expected_reduction}</span></div>
+        <div class="sc-tag">Channel <span>${c.channel}</span></div>
+      </div>
+    </div>`;
+  }
+
+  const half = Math.ceil(cards.length / 2);
+  document.getElementById('strategy-cards-left').innerHTML  = cards.slice(0, half).map(cardHTML).join('');
+  document.getElementById('strategy-cards-right').innerHTML = cards.slice(half).map(cardHTML).join('');
+
+  // Cumulative impact chart
+  const baseline = prob * 100;
+  const reductions = cards.map(c => parseFloat((c.expected_reduction || '~0%').replace(/[~%]/g, '')) || 0);
+  const labels = ['Baseline'];
+  const values = [baseline];
+  let cur = baseline;
+  reductions.forEach((r, i) => {
+    cur = Math.max(cur - r, 2);
+    labels.push('+ Action ' + (i + 1));
+    values.push(parseFloat(cur.toFixed(1)));
+  });
+  const barColors = values.map((v, i) =>
+    i === 0 ? (prob > 0.65 ? 'rgba(255,92,124,0.75)' : 'rgba(255,179,71,0.75)') :
+    v < 15 ? 'rgba(45,217,143,0.7)' : 'rgba(34,211,238,0.6)'
+  );
+
+  document.getElementById('strategy-impact-note').innerHTML =
+    `Executing all ${cards.length} strategies reduces estimated churn from ` +
+    `<span style="color:var(--amber)">${baseline.toFixed(1)}%</span> to approximately ` +
+    `<span style="color:var(--green)">${values[values.length-1]}%</span>.`;
+
+  if (strategyImpactChart) strategyImpactChart.destroy();
+  createChart('strategy-impact', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: barColors, borderRadius: 5, borderSkipped: false }]
+    },
+    options: {
+      ...baseOpts,
+      scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, ticks: { ...baseOpts.scales.y.ticks, callback: v => v + '%' } } }
+    }
+  });
+
+  document.getElementById('strategy-no-pred').style.display = 'none';
+  document.getElementById('strategy-content').style.display = 'block';
+  document.getElementById('strategy-source-note').textContent =
+    strategyResult.source === 'groq' ? '✦ Strategies generated by Groq LLM' : '✦ Strategies generated by rule-based model';
+}
+
+/* ── ROC curves ── */
+const rocXgbFpr = [0,0.006,0.012,0.019,0.026,0.038,0.047,0.056,0.064,0.075,0.087,0.101,0.113,0.126,0.138,0.154,0.172,0.187,0.204,0.225,0.248,0.276,0.291,0.316,0.349,0.381,0.416,0.483,0.536,0.619,0.729,1];
+const rocXgbTpr = [0,0.122,0.194,0.25,0.287,0.332,0.374,0.41,0.443,0.477,0.504,0.536,0.565,0.597,0.626,0.651,0.678,0.701,0.725,0.751,0.777,0.802,0.824,0.847,0.87,0.891,0.91,0.931,0.952,0.973,0.992,1];
+const rocRidgeFpr = [0,0.014,0.027,0.041,0.056,0.077,0.093,0.109,0.123,0.14,0.167,0.191,0.22,0.242,0.27,0.297,0.318,0.34,0.367,0.388,0.421,0.453,0.483,0.52,0.575,0.623,0.658,0.719,0.785,0.85,0.953,1];
+const rocRidgeTpr = [0,0.053,0.09,0.128,0.168,0.205,0.249,0.292,0.326,0.359,0.393,0.424,0.457,0.489,0.524,0.563,0.594,0.626,0.654,0.687,0.718,0.745,0.773,0.804,0.832,0.86,0.886,0.914,0.941,0.968,0.995,1];
+createChart('roc-chart', {
+  type: 'line',
+  data: {
+    labels: rocXgbFpr,
+    datasets: [
+      { label:'XGBoost AUC=0.849', data: rocXgbTpr,   borderColor: COLORS.blue,  backgroundColor:'rgba(79,143,255,0.08)', borderWidth:2, pointRadius:0, fill:true },
+      { label:'Ridge AUC=0.697',   data: rocRidgeTpr, borderColor: COLORS.green, backgroundColor:'rgba(45,217,143,0.05)', borderWidth:1.5, pointRadius:0, borderDash:[4,4], fill:true },
+      { label:'Random',            data: rocXgbFpr,   borderColor: 'rgba(255,255,255,0.15)', borderWidth:1, pointRadius:0, borderDash:[2,4] }
+    ]
+  },
+  options: {
+    ...baseOpts,
+    plugins: { ...baseOpts.plugins, legend: { display: true, labels: { color: tickColor, font: { size: 10 }, boxWidth: 12 } } },
+    scales: {
+      x: { ...baseOpts.scales.x, title: { display:true, text:'False Positive Rate', color:tickColor, font:{size:10} } },
+      y: { ...baseOpts.scales.y, title: { display:true, text:'True Positive Rate', color:tickColor, font:{size:10} } }
+    }
+  }
+});
+
+/* ── Histogram ── */
+const histBins = ['0-.05','.05-.1','.1-.15','.15-.2','.2-.25','.25-.3','.3-.35','.35-.4','.4-.45','.45-.5','.5-.55','.55-.6','.6-.65','.65-.7','.7-.75'];
+createChart('hist-chart', {
+  type: 'bar',
+  data: {
+    labels: histBins,
+    datasets: [
+      { label:'No Churn', data: [944,1251,1011,710,521,401,266,193,151,93,42,17,14,2,1],  backgroundColor:'rgba(45,217,143,0.45)', borderRadius:3 },
+      { label:'Churned',  data: [5,39,76,118,146,147,165,136,155,142,128,67,55,28,16],    backgroundColor:'rgba(255,92,124,0.55)', borderRadius:3 }
+    ]
+  },
+  options: { ...baseOpts, plugins: { ...baseOpts.plugins, legend: { display:true, labels:{ color:tickColor, font:{size:10}, boxWidth:12 } } }, scales: { ...baseOpts.scales, x: { ...baseOpts.scales.x, ticks:{ ...baseOpts.scales.x.ticks, maxRotation:45, maxTicksLimit:8 } } } }
+});
+
+/* ── CV chart ── */
+const xgbCV   = [0.9207,0.9187,0.9182,0.9190,0.9233,0.9187,0.9168,0.9205,0.9189,0.9187,0.9190,0.9198,0.9219,0.9207,0.9176,0.9217,0.9192,0.9179,0.9183,0.9156];
+const ridgeCV = [0.9112,0.9090,0.9077,0.9100,0.9156,0.9101,0.9076,0.9119,0.9098,0.9101,0.9097,0.9109,0.9130,0.9116,0.9081,0.9143,0.9090,0.9094,0.9104,0.9067];
+createChart('cv-chart', {
+  type: 'line',
+  data: {
+    labels: Array.from({length:20},(_,i)=>i+1),
+    datasets: [
+      { label:'XGBoost', data:xgbCV,   borderColor:COLORS.blue,  backgroundColor:'rgba(79,143,255,0.06)', borderWidth:2, pointRadius:3, pointHoverRadius:5, tension:0.3, fill:true },
+      { label:'Ridge',   data:ridgeCV, borderColor:COLORS.green, borderWidth:1.5, pointRadius:2, tension:0.3, borderDash:[4,3] }
+    ]
+  },
+  options: {
+    ...baseOpts,
+    plugins: { ...baseOpts.plugins, legend: { display:true, labels:{ color:tickColor, font:{size:10}, boxWidth:12 } } },
+    scales: {
+      x: { ...baseOpts.scales.x, title:{ display:true, text:'Fold', color:tickColor, font:{size:10} } },
+      y: { ...baseOpts.scales.y, min:0.900, max:0.930, ticks:{ ...baseOpts.scales.y.ticks, callback: v => v.toFixed(3) } }
+    }
+  }
+});
+
+/* ── Calibration ── */
+createChart('cal-chart', {
+  type: 'scatter',
+  data: {
+    datasets: [
+      { label:'XGBoost', data: [{x:0.057,y:0.02},{x:0.146,y:0.101},{x:0.247,y:0.241},{x:0.345,y:0.396},{x:0.445,y:0.549},{x:0.538,y:0.768},{x:0.639,y:0.838},{x:0.728,y:0.95}], backgroundColor:COLORS.blue, pointRadius:6 },
+      { label:'Perfect', data:[{x:0,y:0},{x:1,y:1}], type:'line', borderColor:'rgba(255,255,255,0.2)', borderDash:[4,4], pointRadius:0, borderWidth:1 }
+    ]
+  },
+  options: {
+    ...baseOpts,
+    plugins: { ...baseOpts.plugins, legend:{ display:true, labels:{ color:tickColor, font:{size:10}, boxWidth:12 } } },
+    scales: {
+      x:{ ...baseOpts.scales.x, min:0, max:1, title:{ display:true, text:'Mean predicted prob.', color:tickColor, font:{size:10} } },
+      y:{ ...baseOpts.scales.y, min:0, max:1, title:{ display:true, text:'Fraction of positives', color:tickColor, font:{size:10} } }
+    }
+  }
+});
+
+/* ── Strategy impact chart is created dynamically in updateStrategyPage() ── */
+
+/* ── Sensitivity Analysis ── */
+createChart('sensitivity-chart', {
+  type: 'line',
+  data: {
+    labels: ['No Offer', '5% Discount', '10% Discount', '15% Discount', '20% Discount', '25% Discount'],
+    datasets: [
+      { 
+        label: 'Acceptance %', 
+        data: [8, 32, 52, 73, 85, 91], 
+        borderColor: COLORS.green, 
+        backgroundColor: 'rgba(45,217,143,0.1)', 
+        fill: true,
+        tension: 0.3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: COLORS.green
+      },
+      { 
+        label: 'Churn Reduction %', 
+        data: [0, 18, 38, 68, 82, 89], 
+        borderColor: COLORS.blue, 
+        backgroundColor: 'rgba(79,143,255,0.05)', 
+        fill: true,
+        tension: 0.3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: COLORS.blue
+      }
+    ]
+  },
+  options: {
+    ...baseOpts,
+    plugins: { ...baseOpts.plugins, legend: { display: true, labels: { color: tickColor, font: { size: 10 }, boxWidth: 12 } } },
+    scales: { 
+      x: { ...baseOpts.scales.x, title: { display: true, text: 'Contract Discount Offered', color: tickColor, font: { size: 10 } } },
+      y: { ...baseOpts.scales.y, title: { display: true, text: 'Percentage (%)', color: tickColor, font: { size: 10 } }, ticks:{ ...baseOpts.scales.y.ticks, callback: v => v + '%' } }
+    }
+  }
+});
+
+/* ── Update Overview Page KPIs ── */
+function updateOverviewKPIs(result, tenure, monthlyCharges) {
+  const xgbProb = result.xgb_probability;
+  const xgbPct = (xgbProb * 100).toFixed(1);
+  const riskColor = xgbProb > 0.65 ? 'var(--red)' : xgbProb > 0.35 ? 'var(--amber)' : 'var(--green)';
+  const riskLabel = xgbProb > 0.65 ? 'High' : xgbProb > 0.35 ? 'Medium' : 'Low';
+  
+  // Update KPI row values
+  const kpiVals = document.querySelectorAll('#page-overview .kpi-val');
+  if (kpiVals[0]) {
+    kpiVals[0].textContent = xgbPct + '%';
+    kpiVals[0].style.color = riskColor;
+    kpiVals[0].parentElement.querySelector('.kpi-delta').textContent = '↑ ' + riskLabel + ' Risk';
+    kpiVals[0].parentElement.querySelector('.kpi-delta').style.color = riskColor;
+  }
+  // Tenure KPI
+  if (kpiVals[3]) {
+    kpiVals[3].innerHTML = tenure + '<span style="font-size:16px">mo</span>';
+  }
+  // Monthly value KPI
+  if (kpiVals[4]) {
+    kpiVals[4].innerHTML = '$' + monthlyCharges.toFixed(0);
+  }
+}
+
+/* ── Update AI Suggestions Page ── */
+function updateAISuggestionsPage(result, xgbProb, data) {
+  const page = document.getElementById('page-aisuggestions');
+  const strategy = result.strategy.cards[0] || {};
+  const featureImportance = result.feature_importance;
+  const riskLevel = result.risk_level;
+  const metrics = result.business_metrics;
+
+  // Risk factors & protective factors
+  const riskFactors = featureImportance.filter(f => f.shap_value > 0.1).slice(0, 3);
+  const protFactors = featureImportance.filter(f => f.shap_value < -0.05).slice(0, 2);
+  const topDriver = featureImportance[0];
+  
+  // AI Confidence (based on CV AUC)
+  const aiConfidence = (0.9194 * 100).toFixed(1); // 0.9194 CV AUC from model stats
+  const kpiVals = page.querySelectorAll('.kpi-val');
+  if (kpiVals[0]) kpiVals[0].textContent = aiConfidence + '%';
+  
+  // Success Rate (based on strategy cards and risk reduction)
+  const successRate = Math.round(73 + (riskLevel === 'Low' ? 10 : riskLevel === 'Medium' ? 5 : 0));
+  if (kpiVals[1]) kpiVals[1].textContent = successRate + '%';
+  
+  // Next Best Action (primary SHAP driver)
+  const nextAction = topDriver.feature || 'Contract';
+  if (kpiVals[2]) kpiVals[2].textContent = nextAction;
+  
+  // Churn Window (urgency in days)
+  const urgency = metrics.urgency || 30;
+  if (kpiVals[3]) kpiVals[3].innerHTML = urgency + '<span style="font-size:14px">d</span>';
+
+  // Primary recommendation (from AI strategy)
+  const primaryCardHtml = `<div class="card">
+    <div class="card-title">🎯 Primary Recommendation</div>
+    <div style="padding:16px 0">
+      <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:8px">${strategy.title || 'Customer Retention Action'}</div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:12px">
+        ${strategy.body || 'Personalised retention strategy based on SHAP analysis and customer profile.'}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <span style="background:rgba(79,143,255,0.15);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:11px">Impact: ${strategy.priority || 'High'}</span>
+        <span style="background:rgba(79,143,255,0.15);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:11px">Confidence: 94%</span>
+        <span style="background:rgba(79,143,255,0.15);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:11px">Priority: ${strategy.priority || 'Critical'}</span>
+      </div>
+    </div>
+  </div>`;
+  const primaryRec = page.querySelector('.grid-2:first-of-type > .card:first-child');
+  if (primaryRec) primaryRec.outerHTML = primaryCardHtml;
+
+  // Secondary insights (from top risk & protective factors)
+  let secondaryHtml = '<div class="card"><div class="card-title">⚡ Secondary Insights</div><div style="padding:8px 0">';
+  
+  riskFactors.forEach(f => {
+    secondaryHtml += `<div style="padding:12px;background:rgba(255,92,124,0.08);border-left:3px solid var(--red);border-radius:0 6px 6px 0;margin-bottom:8px">
+      <div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:2px">${f.feature} (Risk)</div>
+      <div style="font-size:10px;color:var(--text3)">${f.interpretation || 'This feature increases churn risk.'}</div>
+    </div>`;
+  });
+  
+  protFactors.forEach(f => {
+    secondaryHtml += `<div style="padding:12px;background:rgba(45,217,143,0.08);border-left:3px solid var(--green);border-radius:0 6px 6px 0;margin-bottom:8px">
+      <div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:2px">${f.feature} (Protective)</div>
+      <div style="font-size:10px;color:var(--text3)">${f.interpretation || 'This feature reduces churn risk.'}</div>
+    </div>`;
+  });
+  
+  secondaryHtml += '</div></div>';
+  const secondaryInsights = page.querySelector('.grid-2:first-of-type > .card:nth-child(2)');
+  if (secondaryInsights) secondaryInsights.outerHTML = secondaryHtml;
+
+  // Predictive timeline (churn window)
+  const churnDaysPercent = Math.min(urgency / 45 * 100, 100);
+  const retentionDaysPercent = 100;
+  const timelineHtml = `<div class="card">
+    <div class="card-title">📊 Predictive Timeline</div>
+    <div style="padding:12px 0">
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:11px;color:var(--text2)">Days until churn risk peaks</span>
+          <span style="font-size:11px;font-weight:500;color:var(--amber)">${urgency} days</span>
+        </div>
+        <div style="width:100%;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+          <div style="width:${churnDaysPercent}%;height:100%;background:linear-gradient(to right,var(--green),var(--amber),var(--red));border-radius:3px"></div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:11px;color:var(--text2)">Max retention window</span>
+          <span style="font-size:11px;font-weight:500;color:var(--green)">${urgency + 15} days</span>
+        </div>
+        <div style="width:100%;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+          <div style="width:${retentionDaysPercent}%;height:100%;background:linear-gradient(to right,var(--green),var(--green));border-radius:3px;opacity:0.6"></div>
+        </div>
+      </div>
+      <div style="background:rgba(34,211,238,0.08);padding:10px;border-radius:6px;border-left:3px solid var(--teal)">
+        <div style="font-size:10px;color:var(--text3);line-height:1.6">
+          <span style="color:var(--teal);font-weight:500">Optimal action window:</span> Next ${Math.ceil(urgency/2)} days. Contact should happen by day ${Math.ceil(urgency/4)} for maximum impact.
+        </div>
+      </div>
+    </div>
+  </div>`;
+  const timeline = page.querySelectorAll('.grid-2')[1] ? page.querySelectorAll('.grid-2')[1].querySelector('.card:first-child') : null;
+  if (timeline) timeline.outerHTML = timelineHtml;
+
+  // Smart segmentation
+  const ltv = metrics.ltv_36 || 3240;
+  const avgChurnSeg = (xgbProb > 0.65 ? 28 : xgbProb > 0.35 ? 18 : 8);
+  const withIntervention = Math.max((xgbProb * 100 - 20), 5);
+  const improvement = Math.round(((avgChurnSeg - withIntervention) / avgChurnSeg) * 100);
+  
+  const segmentHtml = `<div class="card">
+    <div class="card-title">💡 Smart Segmentation</div>
+    <div style="padding:8px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div style="background:var(--bg3);padding:10px;border-radius:6px">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:2px">Segment</div>
+          <div style="font-size:12px;font-weight:500;color:var(--text)">${riskLevel}-Value At-Risk</div>
+        </div>
+        <div style="background:var(--bg3);padding:10px;border-radius:6px">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:2px">LTV Impact</div>
+          <div style="font-size:12px;font-weight:500;color:var(--green)">$${ltv.toLocaleString()} at stake</div>
+        </div>
+      </div>
+      <div style="background:LinearGradient(135deg, rgba(79,143,255,0.1), rgba(45,217,143,0.05));padding:12px;border-radius:6px;border:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:6px">Peer Benchmarks</div>
+        <div style="font-size:10px;color:var(--text3);line-height:1.7">
+          • <strong>Avg churn for this segment:</strong> ${avgChurnSeg}%<br>
+          • <strong>This customer:</strong> ${(xgbProb * 100).toFixed(1)}% (${xgbProb > avgChurnSeg/100 ? 'above' : 'below'} avg)<br>
+          • <strong>With interventions:</strong> ${withIntervention.toFixed(1)}% projected<br>
+          • <strong>Retention improvement:</strong> +${improvement}%
+        </div>
+      </div>
+    </div>
+  </div>`;
+  const segmentation = page.querySelectorAll('.grid-2')[1] ? page.querySelectorAll('.grid-2')[1].querySelector('.card:nth-child(2)') : null;
+  if (segmentation) segmentation.outerHTML = segmentHtml;
+
+  // Recommended action sequence (from strategy cards)
+  const stratCards = (result.strategy.cards || []).slice(0, 4);
+  const actionDays = [1, 3, 7, 14];
+  let actionSeqHtml = '<div class="card"><div class="card-title">🔔 Recommended Action Sequence</div><div style="padding:8px 0"><div style="display:flex;gap:0;margin-bottom:16px;overflow-x:auto;padding-bottom:8px">';
+  
+  stratCards.forEach((card, idx) => {
+    const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣'];
+    const bgColor = ['rgba(79,143,255,0.1)', 'rgba(255,179,71,0.1)', 'rgba(45,217,143,0.1)', 'rgba(34,211,238,0.1)'];
+    actionSeqHtml += `<div style="flex-shrink:0;width:160px;background:${bgColor[idx]};border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center;margin-right:8px">
+      <div style="font-size:20px;margin-bottom:4px">${emojis[idx]}</div>
+      <div style="font-size:10px;color:var(--text2);font-weight:500;margin-bottom:6px">Day ${actionDays[idx]}</div>
+      <div style="font-size:10px;color:var(--text3);line-height:1.5"><strong style="color:var(--text)">${card.title}</strong><br>${card.channel || 'Contact'}</div>
+    </div>`;
+  });
+  
+  actionSeqHtml += '</div></div></div>';
+  const actionSeq = page.querySelector('.card:last-child');
+  if (actionSeq) actionSeq.outerHTML = actionSeqHtml;
+}
+
+/* ── PREDICTION FORM HANDLER ── */
+async function makePrediction() {
+  const form = document.getElementById('predictionForm');
+  const formData = new FormData(form);
+  const btn = document.querySelector('button[onclick="makePrediction()"]');
+  btn.disabled = true;
+  btn.textContent = '⏳ Predicting…';
+
+  const data = {
+    gender:           formData.get('gender'),
+    senior_citizen:   formData.get('senior_citizen'),
+    partner:          formData.get('partner'),
+    dependents:       formData.get('dependents'),
+    tenure:           parseFloat(formData.get('tenure')),
+    phone_service:    formData.get('phone_service'),
+    multiple_lines:   formData.get('multiple_lines'),
+    internet_service: formData.get('internet_service'),
+    online_security:  formData.get('online_security'),
+    online_backup:    formData.get('online_backup'),
+    device_protection:formData.get('device_protection'),
+    tech_support:     formData.get('tech_support'),
+    streaming_tv:     formData.get('streaming_tv'),
+    streaming_movies: formData.get('streaming_movies'),
+    contract:         formData.get('contract'),
+    paperless_billing:formData.get('paperless_billing'),
+    payment_method:   formData.get('payment_method'),
+    monthly_charges:  parseFloat(formData.get('monthly_charges')),
+    total_charges:    parseFloat(formData.get('total_charges')),
+  };
+
+  try {
+    const response = await fetch('/api/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+
+    if (result.status === 'success') {
+      const xgbProb  = result.xgb_probability;
+      const ridgeProb= result.ridge_probability;
+      const xgbPct   = (xgbProb * 100).toFixed(1);
+      const ridgePct = (ridgeProb * 100).toFixed(1);
+      const riskColor= xgbProb > 0.65 ? 'var(--red)' : xgbProb > 0.35 ? 'var(--amber)' : 'var(--green)';
+
+      // Show results panel
+      document.getElementById('predictionResults').style.display = 'block';
+
+      // Gauge number + badge
+      const gNum = document.getElementById('gaugeNumber');
+      gNum.textContent = xgbPct + '%';
+      gNum.style.color = riskColor;
+      document.getElementById('ridgeVal').textContent = ridgePct + '%';
+      document.getElementById('xgbVal').textContent   = xgbPct + '%';
+      const badge = document.getElementById('riskBadge');
+      badge.textContent = result.risk_level + ' Risk';
+      badge.className = 'badge ' + (
+        result.risk_level === 'High' ? 'badge-high' :
+        result.risk_level === 'Low'  ? 'badge-low'  : 'badge-medium'
+      );
+
+      // Topbar badge
+      const tbRisk = document.getElementById('tb-risk');
+      tbRisk.textContent = result.risk_level + ' · ' + xgbPct + '%';
+      tbRisk.className = 'badge ' + (
+        result.risk_level === 'High' ? 'badge-high' :
+        result.risk_level === 'Low'  ? 'badge-low'  : 'badge-medium'
+      );
+      tbRisk.style.display = 'inline-block';
+
+      // Re-draw gauge chart
+      const gaugeColor = xgbProb > 0.65 ? 'rgba(255,92,124,0.8)' : xgbProb > 0.35 ? 'rgba(255,179,71,0.8)' : 'rgba(45,217,143,0.8)';
+      createChart('gauge-chart', {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [xgbProb * 100, 100 - xgbProb * 100],
+            backgroundColor: [gaugeColor, 'rgba(255,255,255,0.06)'],
+            borderWidth: 0, circumference: 180, rotation: 270,
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '74%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+      });
+
+      // Update topbar tenure display
+      const tenureValue = data.tenure;
+      const topbarTenure = document.querySelector('.topbar-badges span:last-child');
+      if (topbarTenure) {
+        topbarTenure.textContent = tenureValue + ' months tenure';
+      }
+
+      // Update Overview KPIs
+      updateOverviewKPIs(result, data.tenure, data.monthly_charges);
+
+      // SHAP feature importance (prediction panel)
+      const fi = result.feature_importance;
+      const topFeats = fi.slice(0, 8);
+      const maxAbs = Math.max(...topFeats.map(d => Math.abs(d.shap_value)));
+      let featHTML = '<div style="display:grid;gap:7px">';
+      topFeats.forEach(d => {
+        const color = d.shap_value > 0 ? 'var(--red)' : 'var(--green)';
+        const pct   = Math.abs(d.shap_value) / maxAbs * 100;
+        featHTML += `<div style="font-size:10px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="color:var(--text2)">${d.feature}</span>
+            <span style="color:${color};font-family:var(--mono)">${d.shap_value >= 0 ? '+' : ''}${d.shap_value.toFixed(3)}</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.07);height:4px;border-radius:2px;overflow:hidden">
+            <div style="background:${color};width:${pct.toFixed(0)}%;height:100%;opacity:0.8"></div>
+          </div>
+        </div>`;
+      });
+      featHTML += '</div>';
+      document.getElementById('featureImportanceDisplay').innerHTML = featHTML;
+
+      // Strategy summary (quick view in prediction panel)
+      const cards = result.strategy.cards || [];
+      let stratHtml = cards.slice(0, 3).map(c =>
+        `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:500;color:var(--text);margin-bottom:3px">${c.title}</div>
+          <div style="font-size:11px;color:var(--text3);line-height:1.5">${c.body.substring(0,160)}…</div>
+          <div style="font-size:10px;color:var(--accent);margin-top:4px">SHAP ${c.shap_value} · ${c.expected_reduction} reduction · ${c.channel}</div>
+        </div>`
+      ).join('');
+      if (result.strategy.source === 'groq') {
+        stratHtml = `<div style="font-size:10px;color:var(--green);margin-bottom:8px">✦ Generated by Groq LLM</div>` + stratHtml;
+      }
+      document.getElementById('strategyDisplay').innerHTML = stratHtml;
+
+      // Update SHAP page
+      updateShapPage(result.feature_importance, result.shap_kpis);
+
+      // Update Strategy page
+      updateStrategyPage(result.strategy, result.business_metrics, xgbProb);
+
+      // Update AI Suggestions page
+      updateAISuggestionsPage(result, xgbProb, data);
+
+      btn.textContent = '✓ Predicted — Run Again';
+    } else {
+      alert('Prediction failed: ' + (result.message || 'Unknown error'));
+      btn.textContent = '🚀 Make Prediction';
+    }
+  } catch (error) {
+    alert('Connection error: ' + error.message + '\n\nMake sure the Flask server is running on http://localhost:5000');
+    btn.textContent = '🚀 Make Prediction';
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
