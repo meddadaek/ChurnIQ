@@ -1539,24 +1539,43 @@ function updateAISuggestionsPage(result, xgbProb, data) {
   const protFactors = featureImportance.filter(f => f.shap_value < -0.05).slice(0, 2);
   const topDriver = featureImportance[0];
   
-  // AI Confidence (based on CV AUC)
-  const aiConfidence = (0.9194 * 100).toFixed(1); // 0.9194 CV AUC from model stats
+  // AI Confidence (based on prediction & model AUC)
+  // Higher prediction certainty (extremeness) = higher confidence
+  const predictionCertainty = Math.abs(xgbProb - 0.5) * 2; // 0 to 1, higher for extreme predictions
+  const aiConfidence = Math.round((0.9194 + predictionCertainty * 0.08) * 100); // CV AUC 91.94% + bonus for certainty
   const kpiVals = page.querySelectorAll('.kpi-val');
+  const kpiSubs = page.querySelectorAll('.kpi-sub');
   if (kpiVals[0]) kpiVals[0].textContent = aiConfidence + '%';
   
-  // Success Rate (based on strategy cards and risk reduction)
-  const successRate = Math.round(73 + (riskLevel === 'Low' ? 10 : riskLevel === 'Medium' ? 5 : 0));
+  // Pattern Strength (based on top SHAP driver)
+  const patternStrength = Math.min(
+    Math.abs(topDriver.shap_value) * 150, // Scale SHAP value 0-150
+    100
+  );
+  if (kpiSubs[0]) kpiSubs[0].textContent = Math.round(patternStrength) + '% · Pattern strength';
+  
+  // Success Rate (based on risk level & intervention probability)
+  const baseSuccessRate = 68; // base intervention success
+  const riskBonus = riskLevel === 'High' ? 8 : riskLevel === 'Low' ? 12 : 5; // Higher for extreme risks
+  const successRate = Math.round(baseSuccessRate + riskBonus + (1 - xgbProb) * 12); // Reward lower churn prob
   if (kpiVals[1]) kpiVals[1].textContent = successRate + '%';
   
   // Next Best Action (primary SHAP driver)
   const nextAction = topDriver.feature || 'Contract';
+  const nextActionSub = topDriver.feature === 'Contract' ? 'Upgrade' : topDriver.feature === 'OnlineSecurity' ? 'Add service' : 'Optimize';
   if (kpiVals[2]) kpiVals[2].textContent = nextAction;
+  if (kpiSubs[2]) kpiSubs[2].textContent = nextActionSub;
   
-  // Churn Window (urgency in days)
-  const urgency = metrics.urgency || 30;
+  // Churn Window (urgency in days, based on risk probability)
+  const baseUrgency = xgbProb > 0.65 ? 20 : xgbProb > 0.35 ? 30 : 60;
+  const urgency = metrics.urgency || baseUrgency;
   if (kpiVals[3]) kpiVals[3].innerHTML = urgency + '<span style="font-size:14px">d</span>';
+  if (kpiSubs[3]) kpiSubs[3].textContent = urgency < 25 ? 'Critical period' : 'Action window';
 
   // Primary recommendation (from AI strategy)
+  const confidenceBonus = Math.min(predictionCertainty * 8, 10); // Add 0-10% bonus for extreme predictions
+  const primaryConfidence = Math.round(85 + confidenceBonus); // Base 85% + bonus for certainty
+  const impactLevel = strategy.priority === 'Critical' ? 'High' : strategy.priority === 'High' ? 'Medium' : 'Low';
   const primaryCardHtml = `<div class="card">
     <div class="card-title">🎯 Primary Recommendation</div>
     <div style="padding:16px 0">
@@ -1565,8 +1584,8 @@ function updateAISuggestionsPage(result, xgbProb, data) {
         ${strategy.body || 'Personalised retention strategy based on SHAP analysis and customer profile.'}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-        <span style="background:rgba(79,143,255,0.15);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:11px">Impact: ${strategy.priority || 'High'}</span>
-        <span style="background:rgba(79,143,255,0.15);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:11px">Confidence: 94%</span>
+        <span style="background:rgba(79,143,255,0.15);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:11px">Impact: ${impactLevel}</span>
+        <span style="background:rgba(79,143,255,0.15);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:11px">Confidence: ${primaryConfidence}%</span>
         <span style="background:rgba(79,143,255,0.15);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:11px">Priority: ${strategy.priority || 'Critical'}</span>
       </div>
     </div>
@@ -1629,23 +1648,28 @@ function updateAISuggestionsPage(result, xgbProb, data) {
   const timeline = page.querySelectorAll('.grid-2')[1] ? page.querySelectorAll('.grid-2')[1].querySelector('.card:first-child') : null;
   if (timeline) timeline.outerHTML = timelineHtml;
 
-  // Smart segmentation
+  // Smart segmentation with dynamic confidence
   const ltv = metrics.ltv_36 || 3240;
   const avgChurnSeg = (xgbProb > 0.65 ? 28 : xgbProb > 0.35 ? 18 : 8);
   const withIntervention = Math.max((xgbProb * 100 - 20), 5);
   const improvement = Math.round(((avgChurnSeg - withIntervention) / avgChurnSeg) * 100);
+  const segmentationConfidence = Math.round((0.9194 - Math.abs(xgbProb - 0.5) * 0.3) * 100); // Lower confidence for mid-range probabilities
   
   const segmentHtml = `<div class="card">
     <div class="card-title">💡 Smart Segmentation</div>
     <div style="padding:8px 0">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
         <div style="background:var(--bg3);padding:10px;border-radius:6px">
           <div style="font-size:10px;color:var(--text3);margin-bottom:2px">Segment</div>
           <div style="font-size:12px;font-weight:500;color:var(--text)">${riskLevel}-Value At-Risk</div>
         </div>
         <div style="background:var(--bg3);padding:10px;border-radius:6px">
           <div style="font-size:10px;color:var(--text3);margin-bottom:2px">LTV Impact</div>
-          <div style="font-size:12px;font-weight:500;color:var(--green)">$${ltv.toLocaleString()} at stake</div>
+          <div style="font-size:12px;font-weight:500;color:var(--green)">$${ltv.toLocaleString()}</div>
+        </div>
+        <div style="background:var(--bg3);padding:10px;border-radius:6px">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:2px">Confidence</div>
+          <div style="font-size:12px;font-weight:500;color:var(--accent)">${segmentationConfidence}%</div>
         </div>
       </div>
       <div style="background:LinearGradient(135deg, rgba(79,143,255,0.1), rgba(45,217,143,0.05));padding:12px;border-radius:6px;border:1px solid var(--border)">
