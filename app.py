@@ -268,11 +268,13 @@ def predict_pipeline(raw: dict) -> dict:
     # SHAP
     sv = shap_explainer(df_xgb).values[0]
     shap_dict = {col: float(v) for col, v in zip(xgb_cols, sv)}
+    base_value = float(shap_explainer.expected_value)
 
     return {
         "ridge_prob": ridge_prob,
         "xgb_prob":   xgb_prob,
         "shap_dict":  shap_dict,
+        "base_value": base_value,
         "xgb_cols":   xgb_cols,
     }
 
@@ -512,6 +514,7 @@ def predict():
         ridge_prob = result["ridge_prob"]
         xgb_prob   = result["xgb_prob"]
         shap_dict  = result["shap_dict"]
+        base_value = result["base_value"]
         xgb_cols   = result["xgb_cols"]
 
         ranked = sorted(shap_dict.items(), key=lambda x: abs(x[1]), reverse=True)
@@ -559,6 +562,7 @@ def predict():
                 "prot_count": prot_count,
                 "top_driver": top_driver,
                 "top_val":    round(top_val, 3),
+                "base_value": round(base_value, 3),
             },
             "strategy":           strategy,
             "business_metrics": {

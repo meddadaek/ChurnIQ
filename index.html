@@ -707,7 +707,7 @@ body {
     <div class="kpi-row" style="grid-template-columns:repeat(4,1fr)">
       <div class="kpi kpi-amber">
         <div class="kpi-label">Base Value</div>
-        <div class="kpi-val" style="color:var(--text2); font-size:20px">−1.381</div>
+        <div id="shap-base-value" class="kpi-val" style="color:var(--text2); font-size:20px">—</div>
         <div class="kpi-sub">Log-odds baseline</div>
       </div>
       <div class="kpi kpi-red">
@@ -1225,6 +1225,8 @@ let waterfallChart = null;
 
 function updateShapPage(featureImportance, kpis) {
   // Update KPI badges
+  const baseSign = kpis.base_value >= 0 ? '+' : '';
+  document.getElementById('shap-base-value').textContent = baseSign + kpis.base_value.toFixed(3);
   document.getElementById('shap-risk-count').textContent = '+' + kpis.risk_count;
   document.getElementById('shap-prot-count').textContent = '+' + kpis.prot_count;
   document.getElementById('shap-top-driver').textContent = kpis.top_driver;
