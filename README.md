@@ -462,8 +462,8 @@ Contributions welcome! Please:
 
 ## 📧 Contact & Support
 
-- **Author**: [Your Name] (@meddadaek)
-- **Email**: [your-email]
+- **Author**:  meddadaek
+- **Email**: meddadaek@gmail.com
 - **Issues**: [GitHub Issues](https://github.com/meddadaek/customer-churn-predictor-with-shap-ai/issues)
 
 ---
