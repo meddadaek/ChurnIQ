@@ -7,7 +7,7 @@
 
 ## 🎯 Overview
 
-**ChurnIQ** is a sophisticated customer churn prediction platform that combines machine learning explainability (SHAP), AI-powered strategy recommendations, and real-time model insights. It predicts customer churn probability using a two-stage pipeline (Ridge → XGBoost) and provides actionable retention strategies powered by Groq LLM.
+**ChurnIQ** is a sophisticated customer churn prediction platform that combines machine learning explainability (SHAP), AI-powered strategy recommendations, and real-time model insights. It predicts customer churn probability using a two-stage pipeline (Ridge → XGBoost) and provides actionable retention strategies powered by Groq LLM .
 
 Built for telecom customer retention, but extensible to any subscription-based business.
 
