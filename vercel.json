@@ -6,7 +6,9 @@
       "use": "@vercel/python",
       "config": {
         "runtime": "python3.11",
-        "maxLambdaSize": "250mb"
+        "maxLambdaSize": "250mb",
+        "memory": 1024,
+        "maxDuration": 60
       }
     }
   ],
@@ -17,6 +19,7 @@
     }
   ],
   "env": {
-    "PYTHONUNBUFFERED": "1"
+    "PYTHONUNBUFFERED": "1",
+    "FLASK_ENV": "production"
   }
 }

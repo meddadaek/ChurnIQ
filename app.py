@@ -484,9 +484,11 @@ def predict():
     try:
         if not xgb_model or not ridge_model or not pipeline_cfg:
             return jsonify({"status": "error",
-                            "message": "Models not loaded — run bootstrap_models.py first"}), 500
+                            "message": "Models not loaded — run bootstrap_models.py first"}), 503
 
         data = request.get_json(force=True)
+        if not data:
+            return jsonify({"status": "error", "message": "Invalid JSON payload"}), 400
 
         raw = {
             "gender":           str(data.get("gender",           "Male")),
