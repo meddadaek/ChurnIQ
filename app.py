@@ -81,20 +81,24 @@ shap_explainer = None
 background_df  = None
 NUMERIC_COLS   = None
 
+
+
+
 try:
-    with open(MODEL_DIR / "pipeline_config.pkl", "rb") as f: pipeline_cfg   = pickle.load(f)
-    with open(MODEL_DIR / "ridge_final.pkl",      "rb") as f: ridge_model    = pickle.load(f)
-    with open(MODEL_DIR / "xgb_final.pkl",        "rb") as f: xgb_model      = pickle.load(f)
-    with open(MODEL_DIR / "features_numeric.pkl", "rb") as f: NUMERIC_COLS   = pickle.load(f)
-    background_df  = pd.read_csv(MODEL_DIR / "background.csv")
-    shap_explainer = shap.TreeExplainer(xgb_model)
-    print(f"[OK] Models loaded — {len(NUMERIC_COLS)} features | "
-          f"Ridge CV AUC {pipeline_cfg['cv_ridge_auc']:.5f} | "
-          f"XGB CV AUC {pipeline_cfg['cv_xgb_auc']:.5f}")
+    with open(MODEL_DIR / "pipeline_config.pkl", "rb") as f: pipeline_cfg = pickle.load(f)
+    with open(MODEL_DIR / "ridge_final.pkl", "rb") as f: ridge_model = pickle.load(f)
+    with open(MODEL_DIR / "xgb_final.pkl", "rb") as f: xgb_model = pickle.load(f)
+    with open(MODEL_DIR / "features_numeric.pkl", "rb") as f: NUMERIC_COLS = pickle.load(f)
+    print(f"[OK] Core models loaded — {len(NUMERIC_COLS)} features")
 except Exception as e:
-    print(f"[ERROR] Model load failed: {e}")
-    traceback.print_exc()
-    print("  → Run  python bootstrap_models.py  first")
+    print(f"[ERROR] Core model load failed: {e}")
+
+try:
+    background_df = pd.read_csv(MODEL_DIR / "background.csv")
+    shap_explainer = shap.TreeExplainer(xgb_model)
+    print("[OK] SHAP explainer ready")
+except Exception as e:
+    print(f"[WARN] SHAP not available: {e}")
 
 # ─────────────────────────────────────────────────────────────
 # SHAP interpretations
