@@ -81,6 +81,19 @@ shap_explainer = None
 background_df  = None
 NUMERIC_COLS   = None
 
+# ── Auto-bootstrap if .pkl files are missing ──────────────
+_required = ["pipeline_config.pkl", "ridge_final.pkl",
+             "xgb_final.pkl", "features_numeric.pkl"]
+if any(not (MODEL_DIR / f).exists() for f in _required):
+    print("[BOOT] Model files missing — running bootstrap...")
+    import subprocess, sys
+    r = subprocess.run([sys.executable, "models/bootstrap_models.py"],
+                       capture_output=False)
+    if r.returncode != 0:
+        print("[ERROR] bootstrap_models.py failed — check logs")
+    else:
+        print("[BOOT] Models trained successfully!")
+# ──────────────────────────────────────────────────────────
 
 
 
