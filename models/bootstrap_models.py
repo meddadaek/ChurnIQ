@@ -40,8 +40,8 @@ from xgboost import XGBClassifier
 
 warnings.filterwarnings("ignore")
 
-MODEL_DIR = Path("models")
-MODEL_DIR.mkdir(parents=True, exist_ok=True)
+MODEL_DIR = Path(".")
+# No need to create directory as we are in it
 
 # ─────────────────────────────────────────────────────────────
 # Constants  (identical in app.py)
