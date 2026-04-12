@@ -15,7 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
-
+# Train models once at build time — bakes .pkl files into the image
+RUN python models/bootstrap_models.py
 # Expose port
 EXPOSE 5000
 
