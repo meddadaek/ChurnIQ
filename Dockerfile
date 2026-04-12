@@ -15,8 +15,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
-# Train models once at build time — bakes .pkl files into the image
+
+# ✅ Train models at build time — bakes .pkl files into the Docker image
 RUN python models/bootstrap_models.py
+
 # Expose port
 EXPOSE 5000
 
@@ -24,5 +26,5 @@ EXPOSE 5000
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_ENV=production
 
-# Run gunicorn with optimized worker count for ML models
+# Run gunicorn
 CMD ["gunicorn", "--workers", "2", "--worker-class", "sync", "--bind", "0.0.0.0:5000", "--timeout", "180", "--access-logfile", "-", "--error-logfile", "-", "app:app"]
