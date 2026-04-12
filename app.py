@@ -97,22 +97,37 @@ if any(not (MODEL_DIR / f).exists() for f in _required):
 
 
 
-try:
+def _load_models():
+    global ridge_model, xgb_model, pipeline_cfg, shap_explainer, background_df, NUMERIC_COLS
     with open(MODEL_DIR / "pipeline_config.pkl", "rb") as f: pipeline_cfg = pickle.load(f)
     with open(MODEL_DIR / "ridge_final.pkl", "rb") as f: ridge_model = pickle.load(f)
     with open(MODEL_DIR / "xgb_final.pkl", "rb") as f: xgb_model = pickle.load(f)
     with open(MODEL_DIR / "features_numeric.pkl", "rb") as f: NUMERIC_COLS = pickle.load(f)
-    print(f"[OK] Core models loaded — {len(NUMERIC_COLS)} features")
-except Exception as e:
-    print(f"[ERROR] Core model load failed: {e}")
-
-try:
     background_df = pd.read_csv(MODEL_DIR / "background.csv")
     shap_explainer = shap.TreeExplainer(xgb_model)
-    print("[OK] SHAP explainer ready")
-except Exception as e:
-    print(f"[WARN] SHAP not available: {e}")
+    print(f"[OK] Models loaded — {len(NUMERIC_COLS)} features | "
+          f"Ridge CV AUC {pipeline_cfg['cv_ridge_auc']:.5f} | "
+          f"XGB CV AUC {pipeline_cfg['cv_xgb_auc']:.5f}")
 
+try:
+    _load_models()
+except Exception as first_err:
+    print(f"[WARN] Model load failed ({type(first_err).__name__}): {first_err}")
+    print("[BOOT] Auto-retraining models to match current library versions...")
+    import subprocess, sys
+    retrain = subprocess.run(
+        [sys.executable, str(MODEL_DIR / "bootstrap_models.py")],
+        capture_output=False
+    )
+    if retrain.returncode == 0:
+        try:
+            _load_models()
+            print("[OK] Models retrained and loaded successfully!")
+        except Exception as second_err:
+            print(f"[ERROR] Still failed after retrain: {second_err}")
+            traceback.print_exc()
+    else:
+        print("[ERROR] bootstrap_models.py failed — check logs above")
 # ─────────────────────────────────────────────────────────────
 # SHAP interpretations
 # ─────────────────────────────────────────────────────────────
