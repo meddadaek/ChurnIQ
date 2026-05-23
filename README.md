@@ -13,7 +13,6 @@ Built for telecom customer retention, but extensible to any subscription-based b
 
 ---
 
-## **https://customer-churn-predictor-with-shap-ai-production.up.railway.app/**
 
 
 ## ✨ Key Features
